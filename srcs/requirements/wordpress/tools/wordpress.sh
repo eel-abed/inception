@@ -33,7 +33,7 @@ if [ ! -f "wp-config.php" ]; then
 
     echo "Installation du Core de WordPress..."
     wp core install \
-        --url="${DOMAIN_NAME}" \
+        --url="https://${DOMAIN_NAME}:4443" \
         --title="${WP_TITLE}" \
         --admin_user="${WP_ADMIN_USER}" \
         --admin_password="${ADMIN_PASS}" \
