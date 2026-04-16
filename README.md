@@ -80,7 +80,16 @@ google-chrome --user-data-dir=/tmp/chrome_dev_test --host-resolver-rules="MAP ee
 ```
 *(Remplacez `google-chrome` par `chromium` ou le vrai chemin `/Applications/Google\ Chrome.app/Contents/MacOS/Google\ Chrome` sur iMac 42).*
 
-### 3. Validation de l'Interface
+### 3. Confort de travail : Connexion SSH (Copier-Coller)
+L'interface de VirtualBox ne permettant pas un copier-coller fluide, l'idéal est de se connecter à la VM via SSH depuis le terminal natif de l'hôte.
+- Une redirection de port a été configurée dans VirtualBox : Port Hôte `4242` => Port Invité `22`
+- Ouvrez un terminal sur l'hôte physique et tapez :
+```bash
+ssh -p 4242 eel-abed@127.0.0.1
+```
+Vous pouvez désormais travailler dans votre VM "à distance" avec le copier-coller de votre terminal moderne, et lancer vos commandes `make` ici !
+
+### 4. Validation de l'Interface
 Dans la page Chrome "développeur" qui vient de s'ouvrir, tapez avec le port de redirection :
 👉 **`https://eel-abed.42.fr:4443`**
 
