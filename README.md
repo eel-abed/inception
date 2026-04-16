@@ -67,8 +67,14 @@ Le lancement du projet est automatisé via `Make` :
   - Port Hôte (Mac) : `4443`  => Port Invité (VM Debian) : `443`
 
 ### 2. Le "Hack" DNS pour Chrome
-Pour forcer le navigateur à associer le nom de domaine intra-scolaire (`eel-abed.42.fr`) à `127.0.0.1` sans toucher au fichier `/etc/hosts`, ouvrez un terminal sur le Mac (l'ordinateur physique) et lancez cette commande pour ouvrir une session isolée de Chrome :
+Pour forcer le navigateur à associer le nom de domaine intra-scolaire (`eel-abed.42.fr`) à `127.0.0.1` sans toucher au fichier `/etc/hosts`, ouvrez un terminal sur l'ordinateur physique (hôte) et lancez la commande correspondante à votre système pour ouvrir une session isolée de Chrome :
 
+**Sur Linux Fedora (Postes 42 actuels via Flatpak) :**
+```bash
+flatpak run com.google.Chrome --user-data-dir=/tmp/chrome_dev_test --host-resolver-rules="MAP eel-abed.42.fr 127.0.0.1" --ignore-certificate-errors
+```
+
+**Sur anciens iMac 42 ou Ubuntu :**
 ```bash
 google-chrome --user-data-dir=/tmp/chrome_dev_test --host-resolver-rules="MAP eel-abed.42.fr 127.0.0.1" --ignore-certificate-errors
 ```
