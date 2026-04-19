@@ -69,14 +69,14 @@ Le lancement du projet est automatisé via `Make` :
 ### 2. Le "Hack" DNS pour Chrome
 Pour forcer le navigateur à associer le nom de domaine intra-scolaire (`eel-abed.42.fr`) à `127.0.0.1` sans toucher au fichier `/etc/hosts`, ouvrez un terminal sur l'ordinateur physique (hôte) et lancez la commande correspondante à votre système pour ouvrir une session isolée de Chrome :
 
-**Sur Linux Fedora (Postes 42 actuels via Flatpak) :**
+**Sur Linux Fedora (Postes 42 actuels) :**
 ```bash
-flatpak run com.google.Chrome --user-data-dir=/tmp/chrome_dev_test --host-resolver-rules="MAP eel-abed.42.fr 127.0.0.1" --ignore-certificate-errors
+chromium-browser --user-data-dir=/tmp/chrome_dev_test --host-resolver-rules="MAP eel-abed.42.fr 127.0.0.1"
 ```
 
 **Sur anciens iMac 42 ou Ubuntu :**
 ```bash
-google-chrome --user-data-dir=/tmp/chrome_dev_test --host-resolver-rules="MAP eel-abed.42.fr 127.0.0.1" --ignore-certificate-errors
+google-chrome --user-data-dir=/tmp/chrome_dev_test --host-resolver-rules="MAP eel-abed.42.fr 127.0.0.1"
 ```
 *(Remplacez `google-chrome` par `chromium` ou le vrai chemin `/Applications/Google\ Chrome.app/Contents/MacOS/Google\ Chrome` sur iMac 42).*
 
