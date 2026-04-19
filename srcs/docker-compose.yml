@@ -2,13 +2,11 @@ version: '3.8'
 
 services:
   mariadb:
-    # Nom de l'image qui sera buildée (doit être le même que le service selon le sujet)
     image: mariadb
     container_name: mariadb
     build: 
       context: ./requirements/mariadb
       dockerfile: Dockerfile
-    # Le conteneur doit redémarrer automatiquement en cas de crash
     restart: always
     env_file:
       - .env
@@ -46,10 +44,8 @@ services:
       context: ./requirements/nginx
       dockerfile: Dockerfile
     restart: always
-    # NGINX est le seul à exposer un port vers l'extérieur (le 443 imposé par le sujet)
     ports:
       - "443:443"
-    # NGINX a aussi besoin d'accéder au volume wordpress pour lire les fichiers statiques (html/css)
     volumes:
       - wordpress:/var/www/wordpress
     networks:
@@ -57,7 +53,6 @@ services:
     depends_on:
       - wordpress
 
-# Déclaration des named volumes qui pointeront vers les dossiers physiques sur ta machine/VM
 volumes:
   mariadb:
     driver: local
@@ -72,13 +67,11 @@ volumes:
       o: bind
       device: /home/eel-abed/data/wordpress
 
-# Création du réseau interne pour la communication entre les conteneurs
 networks:
   inception:
     name: inception
     driver: bridge
 
-# Importation externe des secrets depuis le dossier parent
 secrets:
   db_password:
     file: ../secrets/db_password.txt
