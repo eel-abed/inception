@@ -1,97 +1,71 @@
-# 🐳 Inception - Infrastructure System Administration
+*This project has been created as part of the 42 curriculum by eel-abed.*
 
-**Auteur :** eel-abed
-**Projet :** Inception (École 42)
+# 🐳 Inception
 
-Ce document centralise toutes les exigences techniques (Product Requirements Document), l'architecture de l'infrastructure Docker, ainsi que les procédures de lancement et de tests spécifiques à l'environnement 42.
+## Description
+The Inception project is a system administration project from the 42 curriculum. Its goal is to broaden knowledge of system administration by using Docker. We virtualize several Docker images, creating a small but robust infrastructure inside a personal virtual machine. The stack consists of NGINX, WordPress, and MariaDB, each running in its own dedicated, strictly isolated container.
 
----
+## Project description
+This project heavily utilizes **Docker** to containerize the services. The base operating system for all containers is `debian:bullseye`. The sources included in this repository consist of custom `Dockerfile`s for building the required images manually, configuration scripts in bash (`.sh`), and a `docker-compose.yml` file to orchestrate the deployment on a dedicated network. Only the NGINX container is exposed to the outside network as a reverse-proxy securely handling TLS traffic.
 
-## 🎯 Objectifs du Projet
-Le projet Inception vise à élargir nos connaissances en administration système en virtualisant plusieurs images Docker, le tout tournant à l'intérieur d'une Machine Virtuelle personnelle. L'objectif est de mettre en place une petite infrastructure web fonctionnelle et sécurisée.
+### Comparisons and Technical Choices
 
-## 🏗️ Architecture Technique (3-Tiers)
+**Virtual Machines vs Docker**
+- Virtual machines virtualize entire hardware stacks, including a full OS kernel for each VM. This makes them heavy and resource-intensive as they duplicate system processes.
+- Docker containerizes at the OS level, sharing the host OS kernel among all containers. This makes containers incredibly lightweight, faster to start, and much less resource-heavy while maintaining process isolation.
 
-L'infrastructure repose sur **3 conteneurs distincts** (règle stricte d'un service par conteneur), communiquant via un réseau intra-conteneurs Docker dédié (`inception`).
+**Secrets vs Environment Variables**
+- Environment variables are often visible in process lists, inspect commands, and system logs, making them potentially vulnerable if they contain sensitive data.
+- Docker Secrets (or secure file-based secret management) mounts sensitive data as an isolated in-memory file inside the container, keeping passwords safely hidden from bash histories, logs, and environment inspections.
 
-| Service | Image de base | Port Interne | Rôle |
-|:---|:---|:---:|:---|
-| **NGINX** | Debian Bullseye | `443` | Reverse-proxy, unique point d'entrée (TLSv1.2/1.3 uniquement). |
-| **WordPress** | Debian Bullseye | `9000` | Exécute le code PHP via PHP-FPM (v7.4) et gère le site. |
-| **MariaDB** | Debian Bullseye | `3306` | Base de données hébergeant la data de WordPress. |
+**Docker Network vs Host Network**
+- The `host` network mode connects the container directly to the host's networking stack, removing the network isolation completely.
+- A custom `Docker Network` (like the custom bridge used in this project) creates an isolated subnet. Containers can communicate privately securely using their container names as DNS, without exposing their internal ports directly to the host machine.
 
-### Contraintes Imposées
-* Aucun conteneur ne doit être lié à `latest` (les images sont construites manuellement depuis `debian:bullseye`).
-* NGINX doit être le **seul** conteneur exposé à l'extérieur.
-* Sécurité totale : TLS obligatoire (auto-signé), pas d'accès direct au port 9000 ou 3306 depuis l'hôte.
-* Les mots de passe et configurations critiques doivent être gérés de manière sécurisée (Docker Secrets & .env).
-* Utilisation d'un volume physique persistant pour la Base de Données (`/var/lib/mysql`) et pour les fichiers du site (`/var/www/wordpress`).
+**Docker Volumes vs Bind Mounts**
+- Bind mounts rely heavily on the host machine's directory structure and OS, mapping a specific explicit host path into a container.
+- Docker Volumes are directories managed entirely by Docker itself. They are easier to back up, migrate, and safer to use across different operating systems. In this project, to ensure persistence natively, named volumes are configured to map to physical host directories (`/home/eel-abed/data`).
 
----
+## Instructions
 
-## 📂 Structure du Répertoire
-```text
-inception/
-├── Makefile
-├── srcs/
-│   ├── docker-compose.yml
-│   ├── .env
-│   └── requirements/
-│       ├── mariadb/
-│       ├── nginx/
-│       └── wordpress/
-└── secrets/
+### Compilation and Setup
+Make sure you have Docker, Docker Compose, and `make` installed on your machine.
+Ensure your `.env` file is properly configured with your credentials inside the `srcs/` folder.
+
+### Execution
+To build the images and launch the infrastructure in the background:
+```bash
+make all
 ```
 
----
+To stop all services properly:
+```bash
+make down
+```
 
-## 🚀 Commandes de Déploiement (Makefile)
+To completely delete the containers, images, and networks:
+```bash
+make clean
+```
 
-Le lancement du projet est automatisé via `Make` :
-- `make` ou `make all` : Construit les dossiers pour les volumes locaux, build les images Docker et lance les conteneurs en background.
-- `make down` : Arrête proprement les conteneurs (`docker compose down`).
-- `make clean` : Arrête les conteneurs et supprime les réseaux/images liées au projet.
-- `make fclean` : Fait tout ce que fait `clean` **ET** supprime toutes les datas physiques (Base de données et fichiers WordPress) en faisant appel à `sudo rm -rf`.
-- `make re` : Fait un `fclean` suivi d'un `all`.
+### Testing without /etc/hosts access (42 Environment)
+Since we cannot modify `/etc/hosts` at 42, we use VirtualBox port forwarding (e.g., Host `4443` -> VM Debian `443`). Run this on the physical host machine to map the domain and launch the site:
 
----
-
-## 🛠️ Comment tester à l'école 42 (Sans accès à /etc/hosts)
-
-À l'école 42, nous n'avons pas les droits `sudo` pour modifier le fichier `/etc/hosts` sur les ordinateurs du cluster. De plus, les ports inférieurs à 1024 (comme le port 443) ne peuvent pas être écoutés depuis l'hôte vers la VirtualBox de manière standard.
-
-### 1. Configuration de la Machine Virtuelle (VirtualBox)
-- Le projet tourne dans une VM Debian (où on a les pleins pouvoirs et où l'on lance `make`).
-- Une **redirection de port (Port Forwarding)** a été configurée dans VirtualBox :
-  - IP Hôte : `127.0.0.1`
-  - Port Hôte (Mac) : `4443`  => Port Invité (VM Debian) : `443`
-
-### 2. Le "Hack" DNS pour Chrome
-Pour forcer le navigateur à associer le nom de domaine intra-scolaire (`eel-abed.42.fr`) à `127.0.0.1` sans toucher au fichier `/etc/hosts`, ouvrez un terminal sur l'ordinateur physique (hôte) et lancez la commande correspondante à votre système pour ouvrir une session isolée de Chrome :
-
-**Sur Linux Fedora (Postes 42 actuels) :**
+**On Linux Fedora (Current 42 Workstations):**
 ```bash
 chromium-browser --user-data-dir=/tmp/chrome_dev_test --host-resolver-rules="MAP eel-abed.42.fr 127.0.0.1"
 ```
 
-**Sur anciens iMac 42 ou Ubuntu :**
+**On old iMac 42 or Ubuntu:**
 ```bash
 google-chrome --user-data-dir=/tmp/chrome_dev_test --host-resolver-rules="MAP eel-abed.42.fr 127.0.0.1"
 ```
-*(Remplacez `google-chrome` par `chromium` ou le vrai chemin `/Applications/Google\ Chrome.app/Contents/MacOS/Google\ Chrome` sur iMac 42).*
 
-### 3. Confort de travail : Connexion SSH (Copier-Coller)
-L'interface de VirtualBox ne permettant pas un copier-coller fluide, l'idéal est de se connecter à la VM via SSH depuis le terminal natif de l'hôte.
-- Une redirection de port a été configurée dans VirtualBox : Port Hôte `4242` => Port Invité `22`
-- Ouvrez un terminal sur l'hôte physique et tapez :
-```bash
-ssh -p 4242 eel-abed@127.0.0.1
-```
-Vous pouvez désormais travailler dans votre VM "à distance" avec le copier-coller de votre terminal moderne, et lancer vos commandes `make` ici !
+Access the site via `https://eel-abed.42.fr:4443/`.
 
-### 4. Validation de l'Interface
-Dans la page Chrome "développeur" qui vient de s'ouvrir, tapez avec le port de redirection :
-👉 **`https://eel-abed.42.fr:4443`**
-
-*(Comme le certificat `inception.crt` créé dans le Dockerfile NGINX est auto-signé, cliquez sur "Paramètres avancés" puis "Continuer vers le site").*
-Le site WordPress, propulsé par la VM, s'affichera correctement.
+## Resources
+- [Docker Documentation](https://docs.docker.com/)
+- [NGINX Official Documentation](https://nginx.org/en/docs/)
+- [MariaDB Knowledge Base](https://mariadb.com/kb/en/)
+- [WordPress Codex](https://codex.wordpress.org/)
+- **AI Usage Guidelines:** AI tools (GitHub Copilot / Gemini) were utilized to help translate and format the documentation, generate Markdown structural templates, draft architectural comparisons for the README.md, and assist in terminal commands to debug disk space limitations. No core logic, security configurations, or raw scripts were blindly generated; the AI acted strictly as a pair-programmer and documentarian.
